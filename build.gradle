@@ -1,0 +1,77 @@
+plugins {
+    id 'java-library'
+    id 'application'
+}
+
+group = 'research.sootup'
+version = '2.0.0-research-SNAPSHOT'
+description = 'Standalone editable Qilin module backed by released SootUp jars'
+
+ext {
+    sootupVersion = '2.0.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+dependencies {
+    api "org.soot-oss:sootup.java.bytecode.frontend:${sootupVersion}"
+    api "org.soot-oss:sootup.callgraph:${sootupVersion}"
+
+    implementation 'commons-cli:commons-cli:1.5.0'
+    implementation 'com.github.oshi:oshi-core:6.4.0'
+    implementation 'de.upb.cs.swt:heros:1.2.3'
+    implementation 'org.apache.commons:commons-lang3:3.14.0'
+    implementation 'commons-io:commons-io:2.16.1'
+    runtimeOnly 'org.slf4j:slf4j-simple:2.0.13'
+
+    testImplementation 'junit:junit:4.13.1'
+    testRuntimeOnly 'org.slf4j:slf4j-simple:2.0.13'
+}
+
+application {
+    mainClass = 'qilin.driver.Main'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 8
+}
+
+def configureQilinRuntime = { Test task ->
+    task.maxHeapSize = '4g'
+    task.maxParallelForks = 1
+    task.systemProperty 'qilin.test.classes', layout.buildDirectory.dir('classes/java/test').get().asFile.absolutePath
+    task.systemProperty 'qilin.test.reflection.dir', file('src/test/java/qilin/microben/core/reflog').absolutePath
+    if (project.hasProperty('qilinJre')) {
+        task.systemProperty 'qilin.jre', project.property('qilinJre')
+    }
+}
+
+test {
+    useJUnit()
+    exclude 'qilin/test/**'
+    configureQilinRuntime(delegate)
+}
+
+tasks.register('upstreamTest', Test) {
+    description = 'Runs the imported upstream Qilin microbenchmark tests (requires -PqilinJre=...).'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    useJUnit()
+    include 'qilin/test/**'
+    configureQilinRuntime(delegate)
+    doFirst {
+        if (!project.hasProperty('qilinJre')) {
+            throw new GradleException('upstreamTest requires -PqilinJre=<path-to-Java-8-or-earlier-JRE>.')
+        }
+    }
+}
