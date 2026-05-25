@@ -19,6 +19,7 @@
 package qilin.core.builder;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Queue;
@@ -168,8 +169,8 @@ public class MethodNodeFactory {
   }
 
   private void resolveClinit(JStaticFieldRef staticFieldRef) {
-    FieldSignature fieldSig = staticFieldRef.getFieldSignature();
-    ClassType classType = fieldSig.getDeclClassType();
+    SootField field = resolveField(staticFieldRef.getFieldSignature(), true);
+    ClassType classType = field.getSignature().getDeclClassType();
     if (PTAUtils.isFakeMainClass(classType)) { // skip FakeMain
       return;
     }
@@ -261,21 +262,41 @@ public class MethodNodeFactory {
   }
 
   private FieldRefNode caseInstanceFieldRef(JInstanceFieldRef ifr) {
-    FieldSignature fieldSig = ifr.getFieldSignature();
-    Optional<? extends SootField> osf = scene.getView().getField(fieldSig);
-    SootField sf;
-    if (!osf.isPresent()) {
-      sf =
-          new SootField(
-              fieldSig,
-              Collections.singleton(FieldModifier.PUBLIC),
-              NoPositionInformation.getInstance());
-      // System.out.println("Warnning:" + ifr + " is resolved to be a null field in Scene.");
-    } else {
-      sf = osf.get();
-    }
+    SootField sf = resolveField(ifr.getFieldSignature(), false);
     Local base = ifr.getBase();
     return pag.makeFieldRefNode(pag.makeLocalVarNode(base, base.getType(), method), new Field(sf));
+  }
+
+  /**
+   * Bytecode may qualify an inherited field with the accessing subclass. Normalize such symbolic
+   * references to the actual declaring field so stores and loads share one PAG field node.
+  */
+  private SootField resolveField(FieldSignature fieldSig, boolean staticField) {
+    Optional<? extends SootField> direct = scene.getView().getField(fieldSig);
+    if (direct.isPresent()) {
+      return direct.get();
+    }
+    Queue<ClassType> worklist = new UniqueQueue<>();
+    worklist.add(fieldSig.getDeclClassType());
+    while (!worklist.isEmpty()) {
+      ClassType type = worklist.poll();
+      Optional<? extends SootClass> sootClass = scene.getView().getClass(type);
+      if (!sootClass.isPresent()) {
+        continue;
+      }
+      SootClass current = sootClass.get();
+      Optional<? extends SootField> field = current.getField(fieldSig.getSubSignature());
+      if (field.isPresent()) {
+        return field.get();
+      }
+      current.getInterfaces().forEach(worklist::add);
+      current.getSuperclass().ifPresent(worklist::add);
+    }
+    Set<FieldModifier> modifiers =
+        staticField
+            ? EnumSet.of(FieldModifier.PUBLIC, FieldModifier.STATIC)
+            : Collections.singleton(FieldModifier.PUBLIC);
+    return new SootField(fieldSig, modifiers, NoPositionInformation.getInstance());
   }
 
   private VarNode caseNewMultiArrayExpr(JNewMultiArrayExpr nmae) {
@@ -374,7 +395,8 @@ public class MethodNodeFactory {
   }
 
   private VarNode caseStaticFieldRef(JStaticFieldRef sfr) {
-    return pag.makeGlobalVarNode(sfr.getFieldSignature(), sfr.getType());
+    SootField field = resolveField(sfr.getFieldSignature(), true);
+    return pag.makeGlobalVarNode(field.getSignature(), field.getType());
   }
 
   private Node caseNullConstant(NullConstant nr) {

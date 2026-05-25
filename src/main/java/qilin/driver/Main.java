@@ -61,6 +61,26 @@ public class Main {
   }
 
   public static void main(String[] args) {
+    if (args.length == 0) {
+      args =
+          new String[] {
+            "-pae",
+            "-pe",
+            "-clinit=ONFLY",
+            "-lcs",
+            "-mh",
+            "-apppath",
+            "benchmarks/dacapo2006/eclipse.jar",
+            "-reflectionlog",
+            "benchmarks/dacapo2006/eclipse-refl.log",
+            "-libpath",
+            "benchmarks/dacapo2006/eclipse-deps.jar",
+            "-mainclass",
+            "dacapo.eclipse.Main",
+            "-jre=benchmarks/JREs/jre1.6.0_45",
+            "-pta=insens"
+          };
+    }
     mainRun(args);
   }
 }
