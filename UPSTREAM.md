@@ -26,6 +26,10 @@ Local compatibility patch:
 - `src/test/java/qilin/test/util/JunitTests.java`: accepts Gradle-provided test
   classes, reflection-log, and legacy-JRE locations instead of requiring the
   original multi-module repository layout.
+- `src/main/java/qilin/CoreConfig.java`: defaults generated result files to
+  local `output/` instead of an absolute filesystem-root path.
+- `src/main/java/qilin/driver/PTAOption.java`: fixes the misspelled
+  `-includeall` option lookup so the declared flag is effective.
 
 Validation baseline at import time:
 
@@ -37,3 +41,7 @@ Validation baseline at import time:
   worker memory exhaustion in later collection/context groups under a 4 GB
   heap; it is preserved as an investigatory suite rather than the default
   acceptance gate.
+- Imported DaCapo 2006 validation: all nine programs configured in the old
+  Qilin artifact complete under `insens` with an 8 GB analysis heap; `antlr`
+  additionally completes under `1o`, `2o`, and `Z-2o`. See
+  `docs/DACAPO2006-VALIDATION.md`.

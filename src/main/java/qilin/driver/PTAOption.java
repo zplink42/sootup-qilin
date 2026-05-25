@@ -219,7 +219,7 @@ public class PTAOption extends Options {
     if (cmd.hasOption("reflectionlog")) {
       PTAConfig.v().getAppConfig().REFLECTION_LOG = cmd.getOptionValue("reflectionlog");
     }
-    if (cmd.hasOption("inlcudeall")) {
+    if (cmd.hasOption("includeall")) {
       PTAConfig.v().getAppConfig().INCLUDE_ALL = true;
     }
     if (cmd.hasOption("turnerconfig")) {

@@ -110,7 +110,7 @@ public class CoreConfig {
   }
 
   public static class OutputConfiguration {
-    public String outDir = "";
+    public String outDir = "output";
 
     /** dump appclasses to jimple */
     public boolean dumpJimple = false;

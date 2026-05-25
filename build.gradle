@@ -75,3 +75,67 @@ tasks.register('upstreamTest', Test) {
         }
     }
 }
+
+def dacapo2006MainClasses = [
+    antlr   : 'dacapo.antlr.Main',
+    bloat   : 'dacapo.bloat.Main',
+    chart   : 'dacapo.chart.Main',
+    eclipse : 'dacapo.eclipse.Main',
+    fop     : 'dacapo.fop.Main',
+    luindex : 'dacapo.luindex.Main',
+    lusearch: 'dacapo.lusearch.Main',
+    pmd     : 'dacapo.pmd.Main',
+    xalan   : 'dacapo.xalan.Main'
+]
+
+tasks.register('runDacapo2006', JavaExec) {
+    description = 'Runs SootUp-Qilin on an imported DaCapo 2006 benchmark (requires -PqilinJre=...).'
+    group = 'verification'
+    dependsOn classes
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'qilin.driver.Main'
+    maxHeapSize = (project.findProperty('qilinHeap') ?: '8g').toString()
+
+    doFirst {
+        String benchmark = (project.findProperty('benchmark') ?: 'antlr').toString()
+        String pta = (project.findProperty('pta') ?: 'insens').toString()
+        if (!dacapo2006MainClasses.containsKey(benchmark)) {
+            throw new GradleException(
+                "Unknown DaCapo 2006 benchmark '${benchmark}'. Available benchmarks: ${dacapo2006MainClasses.keySet().join(', ')}")
+        }
+        if (!project.hasProperty('qilinJre')) {
+            throw new GradleException('runDacapo2006 requires -PqilinJre=<path-to-jre1.6.0_45>.')
+        }
+
+        File benchmarkDir = file('benchmarks/dacapo2006')
+        File appJar = new File(benchmarkDir, "${benchmark}.jar")
+        File libJar = new File(benchmarkDir, "${benchmark}-deps.jar")
+        File reflectionLog = new File(benchmarkDir, "${benchmark}-refl.log")
+        File jre = file(project.property('qilinJre'))
+        [appJar, libJar, reflectionLog, jre].each { File input ->
+            if (!input.exists()) {
+                throw new GradleException("Required Qilin input does not exist: ${input.absolutePath}")
+            }
+        }
+
+        List<String> runtimeArgs = [
+            "-pta=${pta}",
+            '-apppath', appJar.absolutePath,
+            '-libpath', libJar.absolutePath,
+            '-reflectionlog', reflectionLog.absolutePath,
+            '-mainclass', dacapo2006MainClasses[benchmark],
+            '-jre', jre.absolutePath
+        ]
+        if ((project.findProperty('experimentOptions') ?: 'false').toString().toBoolean()) {
+            runtimeArgs.addAll(['-pae', '-pe', '-clinit=ONFLY', '-lcs', '-mh'])
+        }
+        if ((project.findProperty('singleEntry') ?: 'false').toString().toBoolean()) {
+            runtimeArgs.add('-singleentry')
+        }
+        if ((project.findProperty('dumpStats') ?: 'false').toString().toBoolean()) {
+            runtimeArgs.add('-dumpstats')
+        }
+        setArgs(runtimeArgs)
+        logger.lifecycle("Running Qilin PTA '${pta}' on DaCapo 2006 '${benchmark}' with ${maxHeapSize} heap.")
+    }
+}

@@ -6,3 +6,4 @@ build/
 *.log
 .bootstrap/
 .DS_Store
+/output/

@@ -68,6 +68,34 @@ implicit runtime entry construction:
 
 Useful PTA patterns include `insens`, `1c`, `2o`, `2t`, `Z-2o`, and `T-2o`.
 
+## DaCapo 2006 Validation
+
+The local `benchmarks/dacapo2006` directory contains the inputs copied from
+`D:\gitdesk\qilin-generics\artifact\benchmarks\dacapo2006`. Its jar files and
+Tamiflex logs are ignored by Git so experiments remain local without making
+this research repository carry 87 MB of binary fixtures.
+
+The `runDacapo2006` task reproduces the benchmark-to-entry-point, dependency,
+reflection-log, and JRE conventions from the prior Qilin artifact. It covers
+the nine DaCapo programs declared in its `bm2006.py`:
+`antlr`, `bloat`, `chart`, `eclipse`, `fop`, `luindex`, `lusearch`, `pmd`,
+and `xalan`.
+
+Run a context-insensitive baseline using the same precision flags used by the
+older Zipper-style artifact configuration:
+
+```powershell
+.\gradlew.bat runDacapo2006 -Pbenchmark=antlr -Ppta=insens -PexperimentOptions=true -PqilinJre='D:\gitdesk\qilin-generics\artifact\benchmarks\JREs\jre1.6.0_45'
+```
+
+The task defaults to an 8 GB analysis JVM. Override it with
+`-PqilinHeap=12g`, enable lightweight single-entry mode with
+`-PsingleEntry=true`, or request Qilin result files with `-PdumpStats=true`.
+Generated results are placed under the ignored local `output` directory.
+
+Detailed results and current analysis limitations are recorded in
+`docs/DACAPO2006-VALIDATION.md`.
+
 ## Research Workflow
 
 Make algorithm changes under `src/main/java/qilin`, especially:
@@ -84,6 +112,10 @@ One local compatibility adjustment is already applied: `OnFlyCallGraph`
 retains its public `getCalls()` method without `@Override`, because the
 published `sootup.callgraph:2.0.0` jar omits that interface method even though
 the `v2.0.0` repository source declares it.
+
+Two small runtime fixes are also applied locally: dumped result files now
+default to `output` rather than the filesystem root, and the `-includeall`
+command-line option now activates its declared configuration flag.
 
 Verification performed while creating this workspace:
 
