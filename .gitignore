@@ -4,6 +4,7 @@ build/
 .vscode/
 *.iml
 *.log
+!src/test/java/qilin/microben/core/reflog/*.log
 .bootstrap/
 .DS_Store
 /output/

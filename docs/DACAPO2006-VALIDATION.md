@@ -82,5 +82,6 @@ The following commands pass after the local fixes:
 ```powershell
 .\gradlew.bat --no-daemon clean test -PqilinJre='D:\gitdesk\qilin-generics\artifact\benchmarks\JREs\jre1.6.0_45'
 .\gradlew.bat --no-daemon upstreamTest --tests qilin.test.core.AssignTests.testSimpleAssign -PqilinJre='D:\gitdesk\qilin-generics\artifact\benchmarks\JREs\jre1.6.0_45'
+.\gradlew.bat --no-daemon upstreamTest --tests qilin.test.core.ReflogTests.testClassForName -PqilinJre='D:\gitdesk\qilin-generics\artifact\benchmarks\JREs\jre1.6.0_45'
 .\gradlew.bat --no-daemon runDacapo2006 -Pbenchmark=antlr -Ppta=insens -PexperimentOptions=true -PdumpStats=true -PqilinJre='D:\gitdesk\qilin-generics\artifact\benchmarks\JREs\jre1.6.0_45' -PqilinHeap=8g
 ```
