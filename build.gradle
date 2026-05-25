@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'research.sootup'
-version = '2.0.0-research-SNAPSHOT'
+version = '1.0.0-SNAPSHOT'
 description = 'Standalone editable Qilin module backed by released SootUp jars'
 
 ext {
@@ -38,6 +38,28 @@ dependencies {
 
 application {
     mainClass = 'qilin.driver.Main'
+}
+
+tasks.register('fatJar', Jar) {
+    description = 'Assembles an executable all-in-one SootUp-Qilin jar with runtime dependencies.'
+    group = 'distribution'
+    dependsOn classes
+//    archiveClassifier = 'all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes(
+            'Main-Class': application.mainClass.get(),
+            'Implementation-Title': project.name,
+            'Implementation-Version': project.version
+        )
+    }
+    from sourceSets.main.output
+    from {
+        configurations.runtimeClasspath.collect { File dependency ->
+            dependency.isDirectory() ? dependency : zipTree(dependency)
+        }
+    }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }
 
 tasks.withType(JavaCompile).configureEach {

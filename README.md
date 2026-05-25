@@ -35,6 +35,24 @@ Qilin test configuration when runtime jars are loaded.
 .\gradlew.bat clean classes
 ```
 
+For the same single-jar workflow used in the previous Qilin workspace, build
+an executable fat jar containing the editable Qilin classes, released SootUp
+jars, and runtime third-party dependencies:
+
+```powershell
+.\gradlew.bat clean fatJar
+```
+
+The output is:
+
+```text
+build\libs\sootup-qilin-research-2.0.0-research-SNAPSHOT-all.jar
+```
+
+DaCapo jars, reflection logs, and legacy JRE jars remain external analysis
+inputs and are supplied on the command line; they are not packaged into the
+Qilin analyzer jar.
+
 Qilin `v2.0.0` models the runtime from JRE jar files rather than the Java 9+
 module image. Supply a Java 8-or-earlier JRE directory when executing analyses
 or the smoke test:
@@ -64,6 +82,12 @@ implicit runtime entry construction:
 
 ```powershell
 .\gradlew.bat run --args='-pta=insens -singleentry -apppath=<classes-or-jar> -mainclass=<fully.qualified.Main> -jre=<legacy-jre-root>'
+```
+
+With the fat jar:
+
+```powershell
+java -Xmx8g -jar build\libs\sootup-qilin-research-2.0.0-research-SNAPSHOT-all.jar -pta=insens -singleentry -apppath=<classes-or-jar> -mainclass=<fully.qualified.Main> -jre=<legacy-jre-root>
 ```
 
 Useful PTA patterns include `insens`, `1c`, `2o`, `2t`, `Z-2o`, and `T-2o`.
